@@ -108,16 +108,16 @@ class LLMReportGenerator:
         prompt = _build_prompt(result)
 
         start = time.perf_counter()
-        output = llm(
+        output: dict[str, Any] = llm(
             prompt,
             max_tokens=512,
             temperature=0.7,
             top_p=0.9,
             stop=["\n\n\n", "---", "以上"],
-        )
+        )  # type: ignore[assignment]
         elapsed = time.perf_counter() - start
 
-        generated = output["choices"][0]["text"].strip()
+        generated: str = output["choices"][0]["text"].strip()
         logger.info("LLM推論完了", elapsed_sec=round(elapsed, 2))
 
         text = f"① {generated}" if not generated.startswith("①") else generated

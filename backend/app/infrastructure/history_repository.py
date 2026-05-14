@@ -38,4 +38,5 @@ class JsonHistoryRepository:
     def _read_file(self) -> list[dict[str, Any]]:
         if not HISTORY_PATH.exists():
             return []
-        return json.loads(HISTORY_PATH.read_text(encoding="utf-8"))
+        data: list[dict[str, Any]] = json.loads(HISTORY_PATH.read_text(encoding="utf-8"))
+        return data

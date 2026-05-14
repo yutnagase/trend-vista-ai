@@ -4,7 +4,7 @@ import time
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Any, cast
+from typing import cast
 
 import feedparser
 import requests
@@ -49,7 +49,7 @@ class MultiSourceCollector:
 
     def collect(
         self, keyword: str
-    ) -> tuple[list[Article], list[Article], list[Article], list[dict[str, Any]]]:
+    ) -> tuple[list[Article], list[Article], list[Article], list[dict[str, str | int]]]:
         with ThreadPoolExecutor(max_workers=3) as executor:
             f_news = executor.submit(self._fetch_news, keyword)
             f_bsky = executor.submit(self._fetch_bsky, keyword)
@@ -119,7 +119,7 @@ class MultiSourceCollector:
             )
         return articles
 
-    def _fetch_hatena(self, keyword: str) -> tuple[list[Article], list[dict[str, Any]]]:
+    def _fetch_hatena(self, keyword: str) -> tuple[list[Article], list[dict[str, str | int]]]:
         quoted = f'"{keyword}"'
         search_url = (
             f"https://b.hatena.ne.jp/search/text?q={urllib.parse.quote(quoted)}&users=3&mode=rss"
@@ -131,7 +131,7 @@ class MultiSourceCollector:
         except Exception:
             return [], []
 
-        entries = []
+        entries: list[dict[str, str | int]] = []
         for entry in feed.entries:
             if keyword not in str(entry.title):
                 continue
@@ -143,26 +143,26 @@ class MultiSourceCollector:
                 }
             )
 
-        entries.sort(key=lambda x: x["bookmark_count"], reverse=True)
+        entries.sort(key=lambda x: int(x["bookmark_count"]), reverse=True)
         top_entries = entries[:5]
 
         articles: list[Article] = []
-        entry_data: list[dict[str, Any]] = []
+        entry_data: list[dict[str, str | int]] = []
         for entry in top_entries:
             time.sleep(0.5)
-            comments = self._get_hatena_comments(entry["url"])
+            comments = self._get_hatena_comments(str(entry["url"]))
             if comments:
                 entry_data.append(entry)
                 for c in comments:
                     articles.append(
                         Article(
                             title=c["comment"],
-                            url=entry["url"],
+                            url=str(entry["url"]),
                             source="hatena",
                             author=c["user"],
                             metadata={
-                                "entry_title": entry["title"],
-                                "bookmark_count": entry["bookmark_count"],
+                                "entry_title": str(entry["title"]),
+                                "bookmark_count": int(entry["bookmark_count"]),
                             },
                         )
                     )

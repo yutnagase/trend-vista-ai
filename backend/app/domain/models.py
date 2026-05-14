@@ -58,7 +58,7 @@ class AnalysisResult(BaseModel):
     news: SourceAnalysis = Field(default_factory=SourceAnalysis)
     bsky: SourceAnalysis = Field(default_factory=SourceAnalysis)
     hatena: SourceAnalysis = Field(default_factory=SourceAnalysis)
-    hatena_entry_data: list[dict[str, Any]] = Field(default_factory=list)
+    hatena_entry_data: list[dict[str, str | int]] = Field(default_factory=list)
     topic_sentiments: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
     analysis_types: list[dict[str, str]] = Field(default_factory=list)
     divergences: list[tuple[str, str, float, str]] = Field(default_factory=list)

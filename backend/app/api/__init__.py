@@ -1,5 +1,7 @@
 """APIエンドポイント."""
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.application import AnalyzeUseCase
@@ -21,10 +23,10 @@ router = APIRouter(prefix="/api")
 
 
 def _get_use_case(
-    analyzer=Depends(get_analyzer),
-    collector=Depends(get_collector),
-    report_generator=Depends(get_report_generator),
-    history=Depends(get_history_repository),
+    analyzer: Any = Depends(get_analyzer),
+    collector: Any = Depends(get_collector),
+    report_generator: Any = Depends(get_report_generator),
+    history: Any = Depends(get_history_repository),
 ) -> AnalyzeUseCase:
     return AnalyzeUseCase(
         analyzer=analyzer,

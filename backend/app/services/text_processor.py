@@ -82,9 +82,9 @@ def extract_keywords(
         stop |= extra_stop_words
     words: list[str] = []
     for title in titles:
-        for token in tok.tokenize(title):  # type: ignore[union-attr]
-            part: str = token.part_of_speech.split(",")[0]  # type: ignore[union-attr]
-            surface: str = token.surface  # type: ignore[union-attr]
+        for token in tok.tokenize(title):
+            part: str = token.part_of_speech.split(",")[0]
+            surface: str = token.surface
             if (
                 part == "名詞"
                 and len(surface) > 1

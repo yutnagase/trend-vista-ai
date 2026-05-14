@@ -44,7 +44,7 @@ class AnalysisResponse(BaseModel):
     news: SourceAnalysisResponse
     bsky: SourceAnalysisResponse
     hatena: SourceAnalysisResponse
-    hatena_entry_data: list[dict[str, Any]] = []
+    hatena_entry_data: list[dict[str, str | int]] = []
     topic_sentiments: dict[str, list[dict[str, Any]]] = {}
     analysis_types: list[dict[str, str]] = []
     divergences: list[list[Any]] = []  # [[srcA, srcB, gap, label], ...]

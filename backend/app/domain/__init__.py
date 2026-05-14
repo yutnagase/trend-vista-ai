@@ -18,7 +18,7 @@ class DataCollectorProtocol(Protocol):
 
     def collect(
         self, keyword: str
-    ) -> tuple[list[Article], list[Article], list[Article], list[dict[str, Any]]]: ...
+    ) -> tuple[list[Article], list[Article], list[Article], list[dict[str, str | int]]]: ...
 
 
 class ReportGeneratorProtocol(Protocol):

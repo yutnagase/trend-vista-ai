@@ -51,7 +51,7 @@ def run_analysis(
     news_articles: list[Article],
     sns_articles: list[Article],
     hatena_articles: list[Article],
-    hatena_entry_data: list[dict[str, Any]],
+    hatena_entry_data: list[dict[str, str | int]],
     analyzer: SentimentAnalyzerProtocol,
 ) -> AnalysisResult:
     """分析パイプラインを実行し、構造化された結果を返す."""
