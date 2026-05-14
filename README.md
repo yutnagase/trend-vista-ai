@@ -50,6 +50,7 @@ trend-vista-ai/
 ### Docker（推奨）
 
 ```bash
+cp backend/.env.example backend/.env
 docker compose up
 ```
 
