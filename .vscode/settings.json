@@ -1,12 +1,12 @@
 {
-  "python.analysis.diagnosticMode": "workspace",
+  "python.analysis.diagnosticMode": "openFilesOnly",
   "python.analysis.typeCheckingMode": "basic",
-  "python.analysis.exclude": ["_reference"],
+  "python.analysis.exclude": ["_reference", "**/node_modules"],
   "python.analysis.diagnosticSeverityOverrides": {
     "reportMissingImports": "none",
     "reportMissingModuleSource": "none"
   },
-  "python.defaultInterpreterPath": "./backend/.venv/bin/python",
+  "python.defaultInterpreterPath": "/home/user1/dev/python/trend-vista-ai/backend/.venv/bin/python",
   "eslint.workingDirectories": ["frontend"],
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
