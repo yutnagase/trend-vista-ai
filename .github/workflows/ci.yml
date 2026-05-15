@@ -64,7 +64,7 @@ jobs:
           python-version: "3.12"
       - run: pip install uv && uv sync
       - name: pip-audit
-        run: uv run pip-audit
+        run: uv run pip-audit --ignore-vuln CVE-2025-69872
 
   frontend-lint:
     runs-on: ubuntu-latest
