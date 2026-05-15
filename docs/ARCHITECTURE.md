@@ -85,6 +85,120 @@ _referenceのREADMEにも「React + FastAPI移行トレードオフ」のセク�
 
 FastAPIのルーター定義。HTTPリクエストの受け取りとレスポンス変換のみを担当し、ビジネスロジックは持たない。
 
+## FastAPI — API層の設計
+
+### エンドポイント設計
+
+| Method | Endpoint | 責務 | レスポンス時間 |
+|--------|----------|------|---------------|
+| POST | `/api/analyze` | データ収集→感情分析→統計量算出→保存 | 10〜30秒 |
+| POST | `/api/report/{id}` | 保存済み結果に対してLLM総評を生成 | 30〜120秒 |
+| GET | `/api/history` | 過去分析一覧（サマリー） | <100ms |
+| GET | `/api/history/{id}` | 個別分析結果（フル） | <100ms |
+| GET | `/health` | ヘルスチェック | <10ms |
+
+分析実行とAI総評生成を分離したのは意図的な設計判断である。LLM推論は30秒〜2分かかるため、分析結果を先に返してUIに表示し、総評は後から非同期で取得する。フロントエンド側ではTanStack Queryのmutationで総評生成を管理し、ローディング状態をUIに反映している。
+
+### Dependsによる依存注入の流れ
+
+FastAPIのDepends機構をDIコンテナとして活用している。リクエストが来たときの依存解決の流れは以下の通り。
+
+```python
+# api/__init__.py
+@router.post("/analyze", response_model=AnalysisResponse)
+async def analyze(
+    request: AnalyzeRequest,
+    use_case: AnalyzeUseCase = Depends(_get_use_case),  # ← ここで注入
+) -> AnalysisResponse:
+    result = use_case.execute(request.keyword)
+    return AnalysisResponse(...)
+
+def _get_use_case(
+    analyzer: Any = Depends(get_analyzer),          # ← @lru_cacheでシングルトン
+    collector: Any = Depends(get_collector),
+    report_generator: Any = Depends(get_report_generator),
+    history: Any = Depends(get_history_repository),
+) -> AnalyzeUseCase:
+    return AnalyzeUseCase(
+        analyzer=analyzer,
+        collector=collector,
+        report_generator=report_generator,
+        history=history,
+    )
+```
+
+```python
+# core/dependencies.py
+@lru_cache
+def get_analyzer() -> SentimentAnalyzer:
+    return SentimentAnalyzer()  # 初回呼び出し時にBERTモデルをロード、以降はキャッシュ
+```
+
+ポイント:
+- `@lru_cache`により、BERTモデルやLLMのような重いリソースはプロセス起動中に1回だけ生成される
+- `_get_use_case`がComposition Rootとして機能し、具象クラスの組み立てをここに集約
+- エンドポイント関数自体はユースケースを呼ぶだけで、依存の詳細を知らない
+- テスト時は`app.dependency_overrides`でモックに差し替え可能
+
+### Pydantic v2によるリクエスト/レスポンス
+
+リクエストバリデーションとレスポンスシリアライズはPydantic v2に委譲している。
+
+```python
+# schemas/__init__.py
+class AnalyzeRequest(BaseModel):
+    keyword: str = Field(..., min_length=1, max_length=100)
+
+class AnalysisResponse(BaseModel):
+    id: str
+    keyword: str
+    timestamp: str
+    news: dict[str, Any]
+    bsky: dict[str, Any]
+    hatena: dict[str, Any]
+    topic_sentiments: dict[str, list[dict[str, Any]]]
+    analysis_types: list[dict[str, str]]
+    divergences: list[list[Any]]
+    ai_report: str
+```
+
+`keyword`に`min_length=1`を設定しているため、空文字列のリクエストはFastAPIが自動的に422を返す。エンドポイント側でバリデーションコードを書く必要がない。
+
+### エラーハンドリング
+
+ドメイン例外をHTTPステータスコードにマッピングする。
+
+```python
+@router.post("/analyze")
+async def analyze(request: AnalyzeRequest, use_case = Depends(_get_use_case)):
+    try:
+        result = use_case.execute(request.keyword)
+    except DataCollectionError as e:
+        raise HTTPException(status_code=404, detail=e.user_message) from e
+    except TrendVistaError as e:
+        raise HTTPException(status_code=500, detail=e.user_message) from e
+```
+
+- `DataCollectionError`（記事が見つからない）→ 404
+- その他の`TrendVistaError` → 500
+- Pydanticバリデーション失敗 → 422（FastAPI自動）
+
+ユーザー向けメッセージ（`user_message`）のみをレスポンスに含め、スタックトレース等の技術的詳細はstructlogに記録する。
+
+### CORSミドルウェア
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,  # デフォルト: ["http://localhost:5173"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+開発時はViteの開発サーバー（port 5173）からFastAPI（port 8000）へのクロスオリジンリクエストが発生するため、CORSを許可している。`cors_origins`は環境変数で設定可能にしており、本番環境では適切なオリジンに絞る想定。
+
 ## フロントエンドの設計
 
 ### ディレクトリ構成の意図
