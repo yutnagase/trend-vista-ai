@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   backend-lint:
@@ -64,7 +64,18 @@ jobs:
           python-version: "3.12"
       - run: pip install uv && uv sync
       - name: pip-audit
-        run: uv run pip-audit
+        run: uv run pip-audit --ignore-vuln CVE-2025-69872
+      - name: Warn if ignored vuln has fix available
+        run: |
+          if uv run pip-audit 2>&1 | grep -q "diskcache.*CVE-2025-69872" && \
+             uv run pip-audit --format=json 2>/dev/null | python -c "
+          import sys, json
+          for dep in json.load(sys.stdin).get('dependencies', []):
+            for vuln in dep.get('vulns', []):
+              if vuln.get('id') == 'CVE-2025-69872' and vuln.get('fix_versions'):
+                print('::warning::CVE-2025-69872 now has a fix. Run: uv lock --upgrade-package diskcache and remove --ignore-vuln from CI.')
+                sys.exit(0)
+          "; then true; fi
 
   frontend-lint:
     runs-on: ubuntu-latest
