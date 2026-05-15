@@ -25,8 +25,13 @@ function AppContent() {
   return (
     <div className="flex min-h-screen">
       {/* サイドバー */}
-      <aside className="w-72 border-r bg-gray-50 p-4">
-        <h1 className="mb-6 text-xl font-bold">🔭 TrendVista AI</h1>
+      <aside className="sidebar-gradient w-72 flex flex-col p-6">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
+            🔭 TrendVista
+          </h1>
+          <p className="text-xs text-[var(--accent-indigo)] opacity-70 mt-1">AI Insight Explorer</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
@@ -34,33 +39,42 @@ function AppContent() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="キーワードを入力..."
-            className="w-full rounded border px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
           <button
             type="submit"
             disabled={analyze.isPending || !keyword.trim()}
-            className="w-full rounded bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-40 transition-colors"
           >
-            {analyze.isPending ? "分析中..." : "分析開始"}
+            {analyze.isPending ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                分析中...
+              </span>
+            ) : (
+              "分析開始"
+            )}
           </button>
         </form>
 
         {analyze.isError && (
-          <p className="mt-3 text-sm text-red-600">{analyze.error.message}</p>
+          <p className="mt-3 text-sm text-red-400">{analyze.error.message}</p>
         )}
 
         {/* 履歴 */}
-        <div className="mt-8">
-          <h2 className="mb-2 text-sm font-semibold text-gray-600">📋 履歴</h2>
+        <div className="mt-8 flex-1 overflow-y-auto">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            履歴
+          </h2>
           <div className="space-y-1">
             {history.data?.map((h) => (
               <button
                 key={h.id}
-                className="w-full rounded px-2 py-1 text-left text-xs hover:bg-gray-200"
+                className="w-full rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] hover:bg-white/5 transition-colors"
                 onClick={() => setKeyword(h.keyword)}
               >
                 {h.keyword}
-                <span className="ml-1 text-gray-400">
+                <span className="ml-1 text-[var(--text-muted)]">
                   ({h.news_count + h.bsky_count + h.hatena_count}件)
                 </span>
               </button>
@@ -70,14 +84,16 @@ function AppContent() {
       </aside>
 
       {/* メインエリア */}
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-8">
         {result ? (
           <ResultView data={result} />
         ) : (
-          <div className="flex h-full items-center justify-center text-gray-400">
+          <div className="flex h-full items-center justify-center">
             <div className="text-center">
-              <p className="text-4xl">🔭</p>
-              <p className="mt-2">キーワードを入力して分析を開始してください</p>
+              <p className="text-5xl">🔭</p>
+              <p className="mt-3 text-[var(--text-muted)]">
+                キーワードを入力して分析を開始してください
+              </p>
             </div>
           </div>
         )}

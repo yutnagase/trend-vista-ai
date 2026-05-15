@@ -94,3 +94,29 @@ async def get_history_detail(
     if not entry:
         raise HTTPException(status_code=404, detail="分析結果が見つかりません")
     return AnalysisResponse(**entry)
+
+
+@router.post("/report/{analysis_id}")
+async def generate_report(
+    analysis_id: str,
+    repo: JsonHistoryRepository = Depends(get_history_repository),
+    report_generator: Any = Depends(get_report_generator),
+) -> dict[str, str]:
+    """AI総評を生成して返す."""
+    from app.domain.models import AnalysisResult
+
+    entry = repo.load_by_id(analysis_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="分析結果が見つかりません")
+
+    try:
+        result = AnalysisResult(**{k: v for k, v in entry.items() if k != "ai_report"})
+        report = report_generator.generate(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI総評生成失敗: {e}") from e
+
+    # 履歴に保存
+    entry["ai_report"] = report
+    repo.save_raw(entry)
+
+    return {"ai_report": report}

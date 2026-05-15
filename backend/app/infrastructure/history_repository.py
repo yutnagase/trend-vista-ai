@@ -35,6 +35,16 @@ class JsonHistoryRepository:
                 return entry
         return None
 
+    def save_raw(self, entry: dict[str, Any]) -> None:
+        """dictをそのまま保存（更新用）."""
+        HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+        history = self._read_file()
+        history = [entry if e.get("id") == entry.get("id") else e for e in history]
+        HISTORY_PATH.write_text(
+            json.dumps(history, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+
     def _read_file(self) -> list[dict[str, Any]]:
         if not HISTORY_PATH.exists():
             return []

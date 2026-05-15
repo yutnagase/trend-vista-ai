@@ -64,11 +64,7 @@ class AnalyzeUseCase:
         result.id = str(uuid.uuid4())
         result.timestamp = datetime.now().isoformat()
 
-        # AI総評生成
-        try:
-            result.ai_report = self._report_generator.generate(result)
-        except Exception as e:
-            log.warning("AI総評生成失敗（分析結果は返却）", error=str(e))
+        # AI総評生成は別途実行（レスポンス高速化のためここではスキップ）
 
         # 履歴保存
         try:

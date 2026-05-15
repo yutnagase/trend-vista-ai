@@ -24,6 +24,10 @@ export const api = {
     });
   },
 
+  generateReport(id: string): Promise<{ ai_report: string }> {
+    return fetchJson(`/report/${id}`, { method: "POST" });
+  },
+
   getHistory(): Promise<HistorySummary[]> {
     return fetchJson("/history");
   },

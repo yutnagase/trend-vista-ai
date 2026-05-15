@@ -11,7 +11,16 @@ services:
       - backend-data:/app/data
     env_file:
       - ./backend/.env
+    environment:
+      - HF_HOME=/app/models/huggingface
+      - HOME=/root
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
   frontend:
     build:
@@ -21,8 +30,10 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend/src:/app/src
+      - ./frontend/vite.config.ts:/app/vite.config.ts
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   backend-models:

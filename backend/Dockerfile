@@ -11,8 +11,7 @@ RUN pip install --no-cache-dir uv && uv pip install --system -e .
 
 COPY . .
 
-RUN useradd -r -s /bin/false appuser && chown -R appuser:appuser /app
-USER appuser
+ENV HF_HOME=/app/models/huggingface
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
