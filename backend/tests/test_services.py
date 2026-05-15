@@ -26,7 +26,9 @@ class TestComputeSentimentStats:
 
 class TestComputeNetScore:
     def test_basic(self):
-        assert abs(compute_net_score({"positive": 0.6, "negative": 0.2, "neutral": 0.2}) - 0.4) < 1e-9
+        assert (
+            abs(compute_net_score({"positive": 0.6, "negative": 0.2, "neutral": 0.2}) - 0.4) < 1e-9
+        )
 
 
 class TestSelectRepresentative:
