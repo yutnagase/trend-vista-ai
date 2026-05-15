@@ -17,6 +17,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/.venv
+          key: uv-${{ runner.os }}-${{ hashFiles('backend/uv.lock') }}
+          restore-keys: uv-${{ runner.os }}-
       - run: pip install uv && uv sync
       - name: Ruff lint
         run: uv run ruff check .
@@ -36,9 +42,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/.venv
+          key: uv-${{ runner.os }}-${{ hashFiles('backend/uv.lock') }}
+          restore-keys: uv-${{ runner.os }}-
       - run: pip install uv && uv sync
-      - name: Run tests
-        run: uv run pytest -x -q
+      - name: Run tests with coverage
+        run: uv run pytest -x -q --cov=app --cov-fail-under=70 --cov-report=term-missing
+
+  backend-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install uv && uv sync
+      - name: pip-audit
+        run: uv run pip-audit
 
   frontend-lint:
     runs-on: ubuntu-latest
@@ -50,11 +76,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: npm-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: npm-${{ runner.os }}-
       - run: npm ci
       - name: ESLint
         run: npx eslint .
       - name: TypeScript type check
         run: npx tsc --noEmit
+      - name: npm audit
+        run: npm audit --audit-level=high
 
   frontend-build:
     runs-on: ubuntu-latest
@@ -67,6 +101,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: npm-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: npm-${{ runner.os }}-
       - run: npm ci
       - name: Build
         run: npm run build
